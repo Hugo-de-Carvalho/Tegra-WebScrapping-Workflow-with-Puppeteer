@@ -1,0 +1,982 @@
+{
+  "name": "Tegra - WebScrapping Workflow with Puppeteer",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -176
+      ],
+      "id": "86864f82-8f48-4c78-9654-659f62eb8081",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY/edit?pli=1&gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "Pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "5be3b2f7-d785-45b8-8ab2-f1ef8b284361",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2Zm7nemHlSpsVLTh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        448,
+        -176
+      ],
+      "id": "b741ee6f-3e8b-4b1e-b8d8-93e5272e1238",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Get row(s) in sheet').item.json.url }}",
+        "options": {
+          "executablePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "timeout": 10000,
+          "waitUntil": "domcontentloaded",
+          "headless": true
+        }
+      },
+      "type": "n8n-nodes-puppeteer.puppeteer",
+      "typeVersion": 1,
+      "position": [
+        672,
+        -176
+      ],
+      "id": "a8bbbb92-3e09-48c6-a62d-d0fb7259b33e",
+      "name": "Puppeteer",
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "executablePath": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "headless": true,
+          "stealth": false
+        }
+      },
+      "type": "n8n-nodes-puppeteer.puppeteer",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        -192
+      ],
+      "id": "5d818eff-bb6a-4e8f-8170-fd26a7c7ad47",
+      "name": "Puppeteer Subpages",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Get row(s) in sheet').item.json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "body"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1872,
+        240
+      ],
+      "id": "f012f700-5131-4663-8cd3-1bb914bb57cf",
+      "name": "CloudScraper Fallback",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://2captcha.com/in.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "a735d6ac635055a9e7a2d6e3433d1efd"
+            },
+            {
+              "name": "method",
+              "value": "userrecaptcha"
+            },
+            {
+              "name": "googlekey",
+              "value": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+            },
+            {
+              "name": "pageurl",
+              "value": "={{ $('Puppeteer').item.json.url }}"
+            },
+            {
+              "name": "json",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1296,
+        64
+      ],
+      "id": "61688e3e-1b7f-4f0c-8fc4-6016db57100a",
+      "name": "2Captcha - Send"
+    },
+    {
+      "parameters": {
+        "url": "http://2captcha.com/res.php",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "a735d6ac635055a9e7a2d6e3433d1efd"
+            },
+            {
+              "name": "action",
+              "value": "get"
+            },
+            {
+              "name": "id",
+              "value": "{{ $json.request }}"
+            },
+            {
+              "name": "json",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1680,
+        64
+      ],
+      "id": "c78957f2-8250-4a00-9e8a-ad59f67aed72",
+      "name": "2Captcha - Result"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "4921ebfa-a90e-455b-a5c3-44191276b952",
+              "leftValue": "={{ $json.body }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "eedd7dc7-85f3-49c8-b3b9-effe6f0d468b",
+              "leftValue": "={{ $json.body }}",
+              "rightValue": "captcha",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        -176
+      ],
+      "id": "71e62efd-b823-48c1-b6a7-2b4db18a9717",
+      "name": "Body OK?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c9321fd6-4946-48d5-bbff-7f13c81b4627",
+              "leftValue": "={{ $('Puppeteer').item.json.body }}",
+              "rightValue": "captcha",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1088,
+        224
+      ],
+      "id": "fc21122c-56e0-446a-bced-e9fd3453032e",
+      "name": "Captcha?"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1488,
+        64
+      ],
+      "id": "a8a54692-41bc-470c-8a48-c2a0b3ce1210",
+      "name": "2Captcha - Wait 20s",
+      "webhookId": "22b8f0b8-1ef8-4f10-9581-18d6988ffa66"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5da61ba9-4c83-44c8-8f81-e17fc0362423",
+              "leftValue": "={{ $json.page_text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "70d636a7-a74e-4273-8b53-9455abdcda23",
+              "leftValue": "={{ $json.page_text }}",
+              "rightValue": "PARDON OUR INTERRUPTION",
+              "operator": {
+                "type": "string",
+                "operation": "notContains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2224,
+        -192
+      ],
+      "id": "fa50a24a-2915-4520-9595-1645f758c4f2",
+      "name": "Is there content?"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY",
+          "mode": "list",
+          "cachedResultName": "Webscraping_Sheet_2025-12-12",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "last_updated": "={{ new Date().toISOString().slice(0, 19).replace('T', ' ') }}",
+            "row_number": "={{ $('Loop Over Items').item.json.row_number }}",
+            "error_notes": "={{ $('Puppeteer').first().error ? $('Puppeteer').first().error.message : \"Empty content or CAPTCHA detected (Fallback failed)\" }}",
+            "status": "Failed"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "instructions",
+              "displayName": "instructions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_updated",
+              "displayName": "last_updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_notes",
+              "displayName": "error_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2416,
+        32
+      ],
+      "id": "d95f7ae2-97d1-4a6d-9a04-8f61e7500df9",
+      "name": "Update Error in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2Zm7nemHlSpsVLTh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY",
+          "mode": "list",
+          "cachedResultName": "Webscraping_Sheet_2025-12-12",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/19_eo8dCH09y-H-maF0_QOyeCZmpHvjbepkLprMIOtLY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "Completed",
+            "url": "={{ $json.source_url.replace(/\\/$/, \"\") }}",
+            "last_updated": "={{ new Date().toISOString().slice(0, 19).replace('T', ' ') }}",
+            "error_notes": "No error"
+          },
+          "matchingColumns": [
+            "url"
+          ],
+          "schema": [
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "instructions",
+              "displayName": "instructions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_updated",
+              "displayName": "last_updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_notes",
+              "displayName": "error_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3920,
+        -192
+      ],
+      "id": "ce337f87-8dfd-4eae-bac3-bf69b0b15523",
+      "name": "Update COMPLETE in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "2Zm7nemHlSpsVLTh",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Retrieve All Scraped Items\n// We access all items returned by the previous node (the subpages data).\n// Using $input.all() ensures we get the full list of processed subpages.\nconst items = $input.all();\nlet combinedText = \"\";\n\n// 2. Extract Main Page Content (Optional)\n// If the workflow passed a \"parent_text\" property from the main page, we add it first.\nif (items.length > 0 && items[0].json.parent_text) {\n  combinedText += \"=== MAIN PAGE CONTENT ===\\n\";\n  combinedText += items[0].json.parent_text + \"\\n\\n\";\n}\n\n// 3. Extract Subpages Content (ROBUST METHOD)\n// We loop through every visited subpage and append its text.\nfor (const item of items) {\n  // CRITICAL FIX: We try to find the content in multiple possible property names.\n  // Puppeteer often outputs to 'body', while other nodes might use 'page_text' or 'text'.\n  const pageContent = item.json.subpage_text || item.json.page_text || item.json.body || item.json.text || \"\";\n\n  // Only append if we actually found substantial text (more than 10 chars)\n  if (pageContent && pageContent.length > 10) { \n    // Use the specific URL as a header, or a generic label if missing\n    const urlHeader = item.json.url ? item.json.url : \"Generic Subpage\";\n    \n    combinedText += `=== SUBPAGE: ${urlHeader} ===\\n`;\n    combinedText += pageContent + \"\\n\\n\";\n  }\n}\n\n// 4. Retrieve Original Source URL (Safety Check)\n// We attempt to preserve the original URL for database consistency.\nlet originalUrl = $input.first().json.url; // Default fallback\ntry {\n    if (items.length > 0 && items[0].json.url) {\n         originalUrl = items[0].json.url;\n    }\n} catch(e) {\n    // If URL retrieval fails, we keep the default to prevent workflow crash\n}\n\n// 5. Return Consolidated Data\n// We ALWAYS return an item, even if text is empty, to prevent \"No output data returned\" errors.\nreturn [{\n  json: {\n    source_url: originalUrl,\n    full_content: combinedText || \"WARNING: No text found. Please check variable names in the Input panel.\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        -192
+      ],
+      "id": "63655e50-901d-4139-b413-e1fb98db0c9e",
+      "name": "Retrieve and Consolidate All Scraped Items"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.0-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.0-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Act as a precise data processing engine.\n\nCONTEXT:\nI have raw content scraped from a website. I need you to split this content into \"Intelligent Chunks\" based on specific constraints and user instructions.\n\nUSER INSTRUCTIONS (Focus/Goal):\n\"{{ $('Loop Over Items').first().json.instructions }}\"\n\nRAW CONTENT:\n\"{{ $json.full_content.replace(/\\n/g, \" \") }}\"\n\nCHUNKING RULES (Strictly follow these):\n1. **Target Size:** Each chunk must be approximately 800-1000 tokens long.\n2. **Overlap:** Include a context overlap of ~100 tokens between chunks.\n3. **Boundaries:** Never break a sentence or paragraph in the middle. Always split at logical paragraph boundaries.\n4. **Relevance:** Ensure the content matches the \"USER INSTRUCTIONS\".\n\nOUTPUT FORMAT:\nReturn ONLY a valid JSON ARRAY of strings.\nExample: [\"chunk 1 text...\", \"chunk 2 text...\"]\nNO Markdown formatting (no ```json). Just the raw array."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        -192
+      ],
+      "id": "5158bdb7-a164-489d-8855-e4c23324443a",
+      "name": "Gemini - Processing Chunks",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "UxyOA0fehDKKr64k",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. GET GEMINI RESPONSE (NATIVE NODE)\n// Access the text from the specific structure of the n8n Gemini node\n// Structure: content -> parts[0] -> text\nconst part = $input.first().json.content.parts[0];\nconst aiText = part ? part.text : \"[]\";\n\n// 2. CLEAN MARKDOWN FORMATTING\n// Gemini often wraps the JSON in ```json ... ``` blocks. We must remove them.\nconst cleanJson = aiText.replace(/```json/g, \"\").replace(/```/g, \"\").trim();\n\n// 3. PARSE JSON\nlet chunks = [];\ntry {\n    chunks = JSON.parse(cleanJson);\n} catch (e) {\n    // Fallback: If parsing fails, treat the whole response as one chunk\n    chunks = [cleanJson];\n}\n\n// 4. RETRIEVE SOURCE URL (DYNAMIC) 🔄\n// Fetch the URL directly from the Loop node (the source of truth for the flow)\nlet sourceUrl = \"\";\ntry {\n    // Get the URL currently being processed by the loop\n    sourceUrl = $('Loop Over Items').first().json.url;\n\n    // Clean the trailing slash (/) if present to ensure it matches the Spreadsheet exactly\n    if (sourceUrl) {\n        sourceUrl = sourceUrl.replace(/\\/$/, \"\");\n    }\n} catch(e) {\n    // Fallback: If the loop node is not found, return a default error string\n    sourceUrl = \"URL_NOT_FOUND\";\n}\n\n// 5. GENERATE MOCK EMBEDDINGS (REQUIRED FOR SUPABASE)\n// Create a fake 1536-dimension vector (standard size) to satisfy the table schema\nconst mockEmbedding = Array(1536).fill(0.0123);\n\n// 6. RETURN FORMATTED DATA\nreturn chunks.map((chunkText, index) => ({\n    json: {\n        source_url: sourceUrl,\n        chunk_text: chunkText,\n        chunk_index: index,\n        total_chunks: chunks.length,\n        embedding: mockEmbedding,\n        metadata: {\n            processed_by: \"Gemini 2.0 Flash\",\n            timestamp: new Date().toISOString()\n        }\n    }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3472,
+        -192
+      ],
+      "id": "b68a4254-4a23-4d6b-b06d-146287be972a",
+      "name": "Get and Process Gemini Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Retrieve Input Data\nconst inputData = $input.first().json;\nconst foundLinks = inputData.links || [];\n\n// 2. Define Base URL\n// Get the current URL from the Loop node to ensure relative links work correctly\nconst baseurl = $('Loop Over Items').first().json.url;\n\n// 3. Process Links (FIXED) 🛡️\n// We limit the output to 10 links and ensure correct URL formatting\nconst finalLinks = foundLinks.slice(0, 10).map(link => {\n    try {\n        // Try to use the native URL constructor (the best practice)\n        return new URL(link, baseurl).href;\n    } catch (e) {\n        // MANUAL FALLBACK (Plan B if the URL constructor fails)\n        // Logic: Checks if the slash is missing between the domain and the page.\n        let safeBase = baseurl;\n        let safeLink = link;\n        \n        // Ensure the base URL ends with a slash\n        if (!safeBase.endsWith(\"/\")) safeBase += \"/\";\n        \n        // Ensure the link DOES NOT start with a slash (to avoid double slashes like //)\n        if (safeLink.startsWith(\"/\")) safeLink = safeLink.substring(1);\n        \n        return safeBase + safeLink;\n    }\n});\n\n// 4. Return Output\nreturn finalLinks.map(url => ({ json: { url } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        -192
+      ],
+      "id": "123a409d-8ac2-44f2-b925-6d28e7d66f23",
+      "name": "Retrieve and process input data"
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "body",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "page_text",
+              "cssSelector": "body"
+            },
+            {
+              "key": "links",
+              "cssSelector": "a",
+              "returnValue": "attribute",
+              "attribute": "href",
+              "returnArray": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2016,
+        -192
+      ],
+      "id": "1e44b603-ea21-4dee-be3a-05782f10fb61",
+      "name": "Extract HTML Content",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Captcha Handling and Fallback in case of error",
+        "height": 400,
+        "width": 1008
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1040,
+        0
+      ],
+      "typeVersion": 1,
+      "id": "d8b61ff2-4a5e-4042-88c5-f9a1fc505e35",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "tableId": "scraped_content",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "source_url",
+              "fieldValue": "={{ $json.source_url }}"
+            },
+            {
+              "fieldId": "chunk_text",
+              "fieldValue": "={{ $json.chunk_text }}"
+            },
+            {
+              "fieldId": "chunk_index",
+              "fieldValue": "={{ $json.chunk_index }}"
+            },
+            {
+              "fieldId": "total_chunks",
+              "fieldValue": "={{ $json.total_chunks }}"
+            },
+            {
+              "fieldId": "embedding",
+              "fieldValue": "={{ $json.embedding }}"
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ $json.metadata }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3696,
+        -192
+      ],
+      "id": "1b132a09-5236-46ec-9ed8-005a79cee6cf",
+      "name": "Vector Storage in Supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LizAkVmWnO5SVMKQ",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "##  Intelligent Chunking",
+        "height": 320,
+        "width": 800,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2832,
+        -304
+      ],
+      "typeVersion": 1,
+      "id": "2c8c271c-0765-4d04-a581-0f3390c956b1",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Puppeteer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Puppeteer": {
+      "main": [
+        [
+          {
+            "node": "Body OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Puppeteer Subpages": {
+      "main": [
+        [
+          {
+            "node": "Retrieve and Consolidate All Scraped Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CloudScraper Fallback": {
+      "main": [
+        [
+          {
+            "node": "Extract HTML Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2Captcha - Send": {
+      "main": [
+        [
+          {
+            "node": "2Captcha - Wait 20s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2Captcha - Result": {
+      "main": [
+        [
+          {
+            "node": "Extract HTML Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Body OK?": {
+      "main": [
+        [
+          {
+            "node": "Extract HTML Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Captcha?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Captcha?": {
+      "main": [
+        [
+          {
+            "node": "2Captcha - Send",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "CloudScraper Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2Captcha - Wait 20s": {
+      "main": [
+        [
+          {
+            "node": "2Captcha - Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is there content?": {
+      "main": [
+        [
+          {
+            "node": "Retrieve and process input data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Error in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve and Consolidate All Scraped Items": {
+      "main": [
+        [
+          {
+            "node": "Gemini - Processing Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini - Processing Chunks": {
+      "main": [
+        [
+          {
+            "node": "Get and Process Gemini Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get and Process Gemini Response": {
+      "main": [
+        [
+          {
+            "node": "Vector Storage in Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Retrieve and process input data": {
+      "main": [
+        [
+          {
+            "node": "Puppeteer Subpages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract HTML Content": {
+      "main": [
+        [
+          {
+            "node": "Is there content?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Error in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Storage in Supabase": {
+      "main": [
+        [
+          {
+            "node": "Update COMPLETE in Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0bf795bc-6044-4a8d-9243-2c1933986e64",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d5432a31a76e844d1a3d703da6a3199d059bb9da11243161c2a325a1541b215d"
+  },
+  "id": "4n7gaHCKbvQ0D08x",
+  "tags": []
+}
