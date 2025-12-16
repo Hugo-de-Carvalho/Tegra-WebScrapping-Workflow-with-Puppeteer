@@ -6,7 +6,7 @@ const foundLinks = inputData.links || [];
 // Get the current URL from the Loop node to ensure relative links work correctly
 const baseurl = $('Loop Over Items').first().json.url;
 
-// 3. Process Links (FIXED) 🛡️
+// 3. Process Links
 // We limit the output to 10 links and ensure correct URL formatting
 const finalLinks = foundLinks.slice(0, 10).map(link => {
     try {
@@ -29,4 +29,5 @@ const finalLinks = foundLinks.slice(0, 10).map(link => {
 });
 
 // 4. Return Output
+
 return finalLinks.map(url => ({ json: { url } }));
