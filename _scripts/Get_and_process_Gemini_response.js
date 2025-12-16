@@ -17,7 +17,7 @@ try {
     chunks = [cleanJson];
 }
 
-// 4. RETRIEVE SOURCE URL (DYNAMIC) 🔄
+// 4. RETRIEVE SOURCE URL (DYNAMIC)
 // Fetch the URL directly from the Loop node (the source of truth for the flow)
 let sourceUrl = "";
 try {
@@ -50,4 +50,5 @@ return chunks.map((chunkText, index) => ({
             timestamp: new Date().toISOString()
         }
     }
+
 }));
